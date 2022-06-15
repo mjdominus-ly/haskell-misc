@@ -18,6 +18,12 @@
   * https://hoogle.haskell.org/
 -}
 
+-- idea: reimplement this using a zipper structure
+-- so that you could do something like `update newval $ lookup key`.
+-- `lookup key` would return a structure with the focus on the target list element
+-- then `getVal $ lookup key` would extract the value.  But you could also update the
+-- value using the focus
+
 import qualified Data.List (find)
 import Data.Maybe (fromMaybe)
 
@@ -25,7 +31,7 @@ import Data.Maybe (fromMaybe)
 _liftVal :: (t -> b) -> (a, t) -> (a, b)
 _liftVal f (a, b) = (a, f b) -- could use `fmap` here but that would be more confusing
 
-newtype Map k v = 
+newtype Map k v =
   Map [(k, v)]
   deriving (Show)
 
@@ -93,7 +99,7 @@ toList = items
 
 -- | Get the keys in the map.
 getKeys :: Map k v -> [k]
-getKeys = map key . items 
+getKeys = map key . items
 
 -- | Get the values in the map.
 getValues :: Map k v -> [v]
@@ -108,7 +114,7 @@ insert :: k -> v -> Map k v -> Map k v
 insert k v = wrapped ((k, v) :)
 
 -- | When the predicate is true of the key, replace the value
-updateIf :: (k -> Bool) -> (v -> v) -> Map k v -> Map k v 
+updateIf :: (k -> Bool) -> (v -> v) -> Map k v -> Map k v
 updateIf p r = wrapped $ fmap (\pr -> if (p . key) pr then _liftVal r pr else pr)
 
 -- | Modify the given key in the given Map.
@@ -133,4 +139,3 @@ instance (Eq k, Eq v) => Eq (Map k v) where
 -- Fix later.
 instance Foldable (Map k) where
   foldMap f = foldMap f . getValues
-  
