@@ -116,4 +116,11 @@ sample = Map [ (1,1), (2, 4), (3, 9), (-3, 9)]
 
 -- | Delete the given key from the given Map.
 delete :: Eq k => k -> Map k v -> Map k v
-delete k = wrapped $ filter ((/= k) . key)
+delete k = wrapped $ filter ((/= k) . key) -- note that it's not enough to just delete the first match
+
+instance (Eq k, Eq v) => Eq (Map k v) where
+  Map [] == Map []   = True
+  Map [] == Map _    = False
+  Map _  == Map []   = False
+  m1@(Map ((k,v):_)) == m2 =
+    get k m2 == Just v && delete k m1 == delete k m2
