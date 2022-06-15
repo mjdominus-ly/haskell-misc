@@ -18,7 +18,7 @@
   * https://hoogle.haskell.org/
 -}
 
-import Data.List
+import qualified Data.List (find)
 
 _liftVal :: (t -> b) -> (a, t) -> (a, b)
 _liftVal f (a, b) = (a, f b) -- could use `fmap` here but that would be more confusing
