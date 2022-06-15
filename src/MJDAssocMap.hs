@@ -24,6 +24,8 @@
 -- then `getVal $ lookup key` would extract the value.  But you could also update the
 -- value using the focus
 
+module MJDAssocMap where
+
 import qualified Data.List (find)
 import Data.Maybe (fromMaybe)
 
