@@ -20,6 +20,7 @@
 
 import qualified Data.List (find)
 
+-- | Take a function on values and turn it into a function on kvps
 _liftVal :: (t -> b) -> (a, t) -> (a, b)
 _liftVal f (a, b) = (a, f b) -- could use `fmap` here but that would be more confusing
 
@@ -64,11 +65,11 @@ fromList = Map
 
 -- \ Return True if the given Map is empty.
 isEmpty :: Map k v -> Bool
-isEmpty = null . items
+isEmpty = null -- from Foldable
 
 -- | Return the number of elements in the given Map.
 size :: Map k v -> Int
-size = length . items
+size = length -- from Foldable
 
 -- | Return True if the given key is in the Map.
 member :: Eq k => k -> Map k v -> Bool
@@ -100,6 +101,8 @@ getValues = map val . items
 {- Manipulating a Map -}
 
 -- | Insert the given key and value into the given Map.
+-- Duplicate key problems like the one in `foldMap` below
+-- can be avoided by having `insert` start by doing `delete`
 insert :: k -> v -> Map k v -> Map k v
 insert k v = wrapped $ ((k, v) :)
 
@@ -124,3 +127,9 @@ instance (Eq k, Eq v) => Eq (Map k v) where
   Map _  == Map []   = False
   m1@(Map ((k,v):_)) == m2 =
     get k m2 == Just v && delete k m1 == delete k m2
+
+-- This isn't really right.  sum $ Map [(1, 3), (1, 4)]  ought to yield 3, not 7.
+-- Fix later.
+instance Foldable (Map k) where
+  foldMap f = foldMap f . getValues
+  
