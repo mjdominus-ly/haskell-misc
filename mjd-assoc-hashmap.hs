@@ -44,7 +44,7 @@ vals = map val . items -- XXX eliminate in favor of getVals
 
 instance Functor (Map k) where
   -- fmap :: (a -> b) -> Map k a -> Map k b
-  fmap f (Map pairs) = Map (fmap (_liftVal f) pairs)
+  fmap f = wrapped $ fmap (_liftVal f)
 
 {- Creating a Map -}
 
