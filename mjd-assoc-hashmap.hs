@@ -19,6 +19,7 @@
 -}
 
 import qualified Data.List (find)
+import Data.Maybe (fromMaybe)
 
 -- | Take a function on values and turn it into a function on kvps
 _liftVal :: (t -> b) -> (a, t) -> (a, b)
@@ -82,7 +83,7 @@ get k = fmap val . Data.List.find keyMatches . items
 
 -- | Get the value for the given key in the Map, providing a default if it does not exist.
 find :: Eq k => v -> k -> Map k v -> v
-find v k = maybe v id . get k
+find v k = fromMaybe v . get k
 
 {- Deconstructing a Map -}
 
@@ -104,7 +105,7 @@ getValues = map val . items
 -- Duplicate key problems like the one in `foldMap` below
 -- can be avoided by having `insert` start by doing `delete`
 insert :: k -> v -> Map k v -> Map k v
-insert k v = wrapped $ ((k, v) :)
+insert k v = wrapped ((k, v) :)
 
 -- | When the predicate is true of the key, replace the value
 updateIf :: (k -> Bool) -> (v -> v) -> Map k v -> Map k v 
