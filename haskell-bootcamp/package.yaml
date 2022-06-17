@@ -38,3 +38,18 @@ tests:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
+
+executables:
+  quickcheck:
+    source-dirs: app
+    main: Quickcheck.hs
+    dependencies:
+      - base >= 4.7 && < 5
+      - haskell-bootcamp
+      - tasty
+      - tasty-hunit
+      - QuickCheck
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
