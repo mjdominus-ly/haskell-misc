@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+
 {-|
   In this module, implement Map. `Map k v` will be a map from keys of type `k` to
   values of type `v`. You can choose whatever implementation you want, here are some
@@ -53,7 +55,7 @@ vals :: Map k v -> [v]
 vals = map val . items -- XXX eliminate in favor of getVals
 
 instance Functor (Map k) where
-  -- fmap :: (a -> b) -> Map k a -> Map k b
+  fmap :: (a -> b) -> Map k a -> Map k b
   fmap f = wrapped $ fmap (_liftVal f)
 
 {- Creating a Map -}
