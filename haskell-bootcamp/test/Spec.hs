@@ -1,7 +1,9 @@
-
+{-# LANGUAGE ScopedTypeVariables #-}
 import Test.Tasty
 import Test.Tasty.HUnit
 import MJDAssocMap
+import Test.QuickCheck hiding (sample)
+import Debug.Trace
 
 main :: IO ()
 main = defaultMain tests
@@ -22,6 +24,12 @@ tests = testGroup "basic tests" [
         (not $ member 17 $ singleton 18 23) @? "shouldn't find missing key in singleton map"
         getKeys (singleton 17 23) @?= [17]
         getValues (singleton 17 23) @?= [23]
+        ,
+    testCase "property" $
+        quickCheck $ \(k,v) ->
+          let m = (empty :: Map Int String)
+          in
+          traceShow (k,v) $ (find "" k (insert k v m)) == v
   ]
 
 testsDummy = testGroup "dummy group" [
