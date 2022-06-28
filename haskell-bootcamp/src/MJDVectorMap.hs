@@ -1,5 +1,7 @@
 module MJDVectorMap where
 
+import Control.Monad (join)
+import Data.Maybe
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Prelude hiding (splitAt)
@@ -15,31 +17,33 @@ unMap (Map x) = x
 class MJDHashable t where
     hash :: t -> Int
 
--- Apply some operation to a vector, but starting at
--- point `start` and wrapping around
--- Alternative implementation:
---      take (size m) $ drop start $ cycle m
--- wrapMap :: (a -> b) -> Int -> Map k a -> Map k b
--- wrapMap f start h = (fmap f back) ++ (fmap f front)
+-- Make a new vector that is like the old one, but starting at
+-- a different place and wrapping around
 wrapV :: Int -> Vector a -> Vector a
 wrapV start vec = back V.++ front
   where
     (front, back) = V.splitAt start vec
 
-type KVP k v = Maybe (k, v)
-
-wrapFold :: (b -> KVP k v -> b) -> b -> Int -> Map k v -> b
-wrapFold f init startPos (Map v) =
-    V.foldl f init (wrapV startPos v)
+-- Fold a Vector, but start in the middle somewhere
+-- and wrap around from the end to the beginning
+-- (not currently used)
+wrapFoldr :: (Maybe (k, v) -> b -> b) -> b -> Int -> Map k v -> b
+wrapFoldr f init startPos (Map v) =
+    V.foldr f init (wrapV startPos v)
 
 get :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe v
-get k m = fmap snd $ (V.find rightKey (wrapV hashVal $ unMap m) :: _)
+get k m = fmap snd $ (join . V.find rightPair) (wrapV start $ unMap m)
   where
-    hashVal = hash k
-    rightKey Nothing = True
-    rightKey (Just (k', _)) = k' == k
+    start = hash k `mod` mapSize m
+    -- Stop searching if we find an empty slot...
+    rightPair Nothing = True
+    -- ... or if we find a full slot with a matching key
+    rightPair (Just (k', _)) = k' == k
 
 lift f = Map . f . unMap
 
-{- instance Foldable (Map k) where
-    foldMap f map = lift (foldMap f) -}
+-- instance Foldable (Map k) where
+--    foldMap f (Map v) = foldMap f v
+
+mapSize :: Map k v -> Int
+mapSize = V.length . unMap
