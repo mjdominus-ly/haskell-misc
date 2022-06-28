@@ -22,6 +22,7 @@ description: Please see the README on GitHub at <https://github.com/githubuser/h
 library:
   dependencies:
     - base >= 4.7 && < 5
+    - vector
   source-dirs: src
 
 tests:
