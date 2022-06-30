@@ -1,7 +1,11 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module MJDVectorMap where
 
 import Control.Monad (join)
+import Data.Char (ord)
 import Data.Maybe
+import Data.Monoid as M
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import GHC.Base (undefined)
@@ -18,6 +22,14 @@ unMap (Map x) = x
 class MJDHashable t where
     hash :: t -> Int
 
+instance MJDHashable Char where
+    hash = ord
+
+-- M.Sum isn't the right thing to use here, I just did it because it was as simple as possible
+instance (Foldable f, MJDHashable a) => MJDHashable (f a) where
+    -- hash as = getSum $ foldMap (M.Sum . hash) as
+    hash as = 0
+
 -- Make a new vector that is like the old one, but starting at
 -- a different place and wrapping around
 wrapV :: Int -> Vector a -> Vector (Int, a)
@@ -32,17 +44,24 @@ wrapV start vec = back V.++ front
 wrapFoldr f init startPos (Map v) =
     V.foldr f init (wrapV startPos v) -}
 
--- getWithIndex ::  (Eq k, MJDHashable k) => k -> Map k v -> Maybe (Int, Maybe (k, v))
+type Slot k v = Maybe (k, v)
 
--- Deech says he would refactor this tro move the snd but isn't sure where it would go
-getWithIndex :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe (Int, Maybe (k, v))
-getWithIndex k m = V.find rightPair (wrapV start $ unMap m)
+getIndex :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe Int
+getIndex k m = fmap fst $ V.find rightSlot (wrapV start $ unMap m)
   where
     start = hash k `mod` size m
     -- Stop searching if we find an empty slot...
-    rightPair (_, Nothing) = True
+    rightSlot (_, Nothing) = True
     -- ... or if we find a full slot with a matching key
-    rightPair (_, Just (k', _)) = k' == k
+    rightSlot (_, Just (k', _)) = k' == k
+
+get :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe v
+get k m = fmap snd $ join $ ((unMap m) V.!) <$> i
+  where
+    i = getIndex k m
+
+sample :: Map String String
+sample = Map $ V.fromList [Just ("apple", "red"), Just ("banana", "yellow"), Nothing, Just ("kiwi", "brown")]
 
 {- findIndex k m = (wrappedIndex + (size m))
     where
