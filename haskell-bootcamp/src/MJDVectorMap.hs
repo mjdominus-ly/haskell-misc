@@ -1,11 +1,9 @@
 module MJDVectorMap where
 
 import Control.Monad (join)
-import Control.Monad.Trans.Accum (mapAccum)
 import Data.Maybe
 import Data.Vector (Vector)
 import qualified Data.Vector as V
-import Distribution.Simple (VersionInterval)
 import GHC.Base (undefined)
 import Prelude hiding (splitAt)
 
@@ -22,26 +20,38 @@ class MJDHashable t where
 
 -- Make a new vector that is like the old one, but starting at
 -- a different place and wrapping around
-wrapV :: Int -> Vector a -> Vector a
+wrapV :: Int -> Vector a -> Vector (Int, a)
 wrapV start vec = back V.++ front
   where
-    (front, back) = V.splitAt start vec
+    (front, back) = V.splitAt start (V.indexed vec)
 
 -- Fold a Vector, but start in the middle somewhere
 -- and wrap around from the end to the beginning
 -- (not currently used)
-wrapFoldr :: (Maybe (k, v) -> b -> b) -> b -> Int -> Map k v -> b
+{- wrapFoldr :: (Maybe (k, v) -> b -> b) -> b -> Int -> Map k v -> b
 wrapFoldr f init startPos (Map v) =
-    V.foldr f init (wrapV startPos v)
+    V.foldr f init (wrapV startPos v) -}
 
-get :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe v
-get k m = fmap snd $ (join . V.find rightPair) (wrapV start $ unMap m)
+-- getWithIndex ::  (Eq k, MJDHashable k) => k -> Map k v -> Maybe (Int, Maybe (k, v))
+
+-- Deech says he would refactor this tro move the snd but isn't sure where it would go
+getWithIndex :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe (Int, Maybe (k, v))
+getWithIndex k m = V.find rightPair (wrapV start $ unMap m)
   where
+    start = hash k `mod` size m
+    -- Stop searching if we find an empty slot...
+    rightPair (_, Nothing) = True
+    -- ... or if we find a full slot with a matching key
+    rightPair (_, Just (k', _)) = k' == k
+
+{- findIndex k m = (wrappedIndex + (size m))
+    where
+    wrappedIndex = (join . V.find rightPair) (wrapV start $ unMap m)
     start = hash k `mod` size m
     -- Stop searching if we find an empty slot...
     rightPair Nothing = True
     -- ... or if we find a full slot with a matching key
-    rightPair (Just (k', _)) = k' == k
+    rightPair (Just (k', _)) = k' == k -}
 
 -- for later: destructive update here?
 -- ways to do this:
@@ -51,7 +61,7 @@ get k m = fmap snd $ (join . V.find rightPair) (wrapV start $ unMap m)
 --   2. map over an initial segment of the whole vector, updating only the one
 --      matching element, and use `V.concat` to reuse the tail of the vector
 
-insert :: k -> v -> Map k v -> Map k v
+{- insert :: k -> v -> Map k v -> Map k v
 insert k v m =
     undefined
   where
@@ -59,7 +69,7 @@ insert k v m =
     -- update if the slot is empty
     newPair Nothing = Just (k, v)
     -- ... or overwrite if we find a full slot with a matching key
-    newPair (Just (k', _)) | k' == k = Just (k, v)
+    newPair (Just (k', _)) | k' == k = Just (k, v) -}
 
 --
 
