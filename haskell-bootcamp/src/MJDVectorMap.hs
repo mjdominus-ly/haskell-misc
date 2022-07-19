@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module MJDVectorMap where
@@ -8,7 +10,6 @@ import Data.Maybe
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic.Mutable as VM
-import GHC.Base (undefined)
 import GHC.Real
 import GHC.Stack
 import Prelude hiding (splitAt)
@@ -21,9 +22,19 @@ data Map k v = Map
     }
     deriving (Show)
 
+-- ask Deech about this
+data Slot k v = Empty | Deleted | Full (k, v)
+    deriving (Eq, Show)
+
+instance Functor (Slot k) where
+    fmap :: (a -> b) -> Slot k a -> Slot k b
+    fmap f (Full (k, v)) = Full (k, f v)
+    fmap _ Empty = Empty
+    fmap _ Deleted = Deleted
+
 -- applies f over the values
 instance Functor (Map k) where
-    fmap f m@(Map{slots = vec}) = m{slots = (fmap . fmap . fmap) f vec}
+    fmap f m@(Map{slots = vec}) = m{slots = (fmap . fmap) f vec}
 
 -- might be simpler with 'do' notation
 {- mapKeys :: (k -> k') -> Map k v -> Map k' v
@@ -48,7 +59,9 @@ wrapV start vec = back V.++ front
   where
     (front, back) = V.splitAt start (V.indexed vec)
 
-type Slot k v = Maybe (k, v)
+valueOf :: Slot k v -> Maybe v
+valueOf (Full (_, v)) = Just v
+valueOf _ = Nothing
 
 -- look up a key in the map, return the number of the slot
 -- where it was found, or where it should be inserted if it's not there yet
@@ -57,15 +70,16 @@ getIndex k m = fmap fst $ V.find rightSlot (wrapV start $ slots m)
   where
     start = hash k `mod` size m
     -- Stop searching if we find an empty slot...
-    rightSlot (_, Nothing) = True
+    rightSlot (_, Empty) = True
     -- ... or if we find a full slot with a matching key
-    rightSlot (_, Just (k', _)) = k' == k
+    rightSlot (_, Full (k', _)) = k' == k
+    -- Keep searching if we have a tombstone
+    rightSlot (_, Deleted) = False
 
 get :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe v
 get k m@(Map{slots = vec}) = do
     i <- getIndex k m
-    (_, v) <- vec V.! i
-    pure v
+    valueOf $ vec V.! i
 
 insert :: (HasCallStack, Eq k, MJDHashable k) => k -> v -> Map k v -> Map k v
 insert k v m@(Map{slots}) =
@@ -73,12 +87,11 @@ insert k v m@(Map{slots}) =
         then insert k v (doubleSize m)
         else
             Map
-                { slots = update1' slots i (Just (k, v))
-                , -- BRANDON
-                  fullness = 1 + fullness m -- not necessarily
+                { slots = update1' slots i (Full (k, v))
+                , fullness = 1 + fullness m -- not necessarily
                 }
   where
-    update1 vec i v = vec V.// [(i, v)]
+    -- update1 vec i v = vec V.// [(i, v)]
     update1' vec i v = V.modify (\vec' -> VM.write vec' i v) vec
     i = fromMaybe err (getIndex k m)
     err = error "can't insert into full table"
@@ -104,7 +117,7 @@ emptyMap n
         error "Minimum size for a map is 4 slots"
     | otherwise =
         Map
-            { slots = V.replicate n Nothing
+            { slots = V.replicate n Empty
             , fullness = 0
             }
 
@@ -122,7 +135,7 @@ getKeys :: Map k v -> [k]
 getKeys = map fst . getItems
 
 getItems :: Map k v -> [(k, v)]
-getItems (Map{slots = vec}) = [(k, v) | Just (k, v) <- V.toList vec]
+getItems (Map{slots = vec}) = [(k, v) | Full (k, v) <- V.toList vec]
 
 sampleKVPs :: [(String, String)]
 sampleKVPs = [("potato", "blue"), ("apple", "red"), ("banana", "yellow"), ("kiwi", "brown"), ("blackberry", "black"), ("octopus", "purple")]
@@ -140,4 +153,4 @@ lift f m@Map{slots} = m{slots = f slots}
 -- important feature: if the pattern match fails, the
 -- element is just skipped silently
 display :: Map k v -> [(Int, k, v)]
-display m = [(i, k, v) | (i, Just (k, v)) <- (V.toList . V.indexed . slots) m]
+display m = [(i, k, v) | (i, Full (k, v)) <- (V.toList . V.indexed . slots) m]
