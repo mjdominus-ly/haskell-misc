@@ -14,18 +14,21 @@ tests =
         "basic tests"
         [ testCase "empty / isEmpty" $ do
             isEmpty empty @? "isEmpty empty is false"
-            length empty @?= 0
+            -- length empty @?= 0
             size empty @?= 0
-            (not . isEmpty) (singleton undefined undefined) @? "singleton shouldn't be empty"
+            let sExample = singleton (17 :: Int) (23 :: Int)
+            (not . isEmpty) sExample @? "singleton shouldn't be empty"
             (not . isEmpty) sample @? "example isn't empty"
         , testCase "singleton" $ do
-            (length $ singleton undefined undefined) @?= 1
-            (size $ singleton undefined undefined) @?= 1
-            fromList [(17, 23)] @?= singleton 17 23
-            (member 17 $ singleton 17 23) @? "should find key in singleton map"
-            (not $ member 17 $ singleton 18 23) @? "shouldn't find missing key in singleton map"
-            getKeys (singleton 17 23) @?= [17]
-            getValues (singleton 17 23) @?= [23]
+            let flExample = fromList [(17, 23) :: (Int, Int)]
+            let sExample = singleton (17 :: Int) (23 :: Int)
+            -- (length $ sExample) @?= 1
+            (size $ sExample) @?= 1
+            flExample @?= sExample
+            (member 17 $ sExample) @? "should find key in singleton map"
+            (not $ member 17 $ sExample) @? "shouldn't find missing key in singleton map"
+            getKeys sExample @?= [17]
+            getValues sExample @?= [23]
         , testCase "property" $
             quickCheck $ \(k, v) ->
                 let m = (empty :: Map Int String)

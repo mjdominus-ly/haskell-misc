@@ -22,7 +22,6 @@ data Map k v = Map
     }
     deriving (Show)
 
--- ask Deech about this
 data Slot k v = Empty | Deleted | Full (k, v)
     deriving (Eq, Show)
 
@@ -48,6 +47,9 @@ class MJDHashable t where
 
 instance MJDHashable Char where
     hash = ord
+
+instance MJDHashable Int where
+    hash = id
 
 instance (Foldable f, MJDHashable a) => MJDHashable (f a) where
     hash = foldr (\a b -> 7 * b + (hash a)) 0
@@ -80,6 +82,10 @@ get :: (Eq k, MJDHashable k) => k -> Map k v -> Maybe v
 get k m@(Map{slots = vec}) = do
     i <- getIndex k m
     valueOf $ vec V.! i
+
+-- | Get the value for the given key in the Map, providing a default if it does not exist.
+find :: (Eq k, MJDHashable k) => v -> k -> Map k v -> v
+find deflt k m = fromMaybe deflt $ get k m
 
 insert :: (HasCallStack, Eq k, MJDHashable k) => k -> v -> Map k v -> Map k v
 insert k v m@(Map{slots}) =
@@ -121,6 +127,15 @@ emptyMap n
             , fullness = 0
             }
 
+_minSize :: Int
+_minSize = 8
+
+empty :: Map k v
+empty = emptyMap _minSize
+
+singleton :: (Eq k, MJDHashable k) => k -> v -> Map k v
+singleton k v = fromListWithSize _minSize [(k, v)]
+
 fromListWithSize :: (MJDHashable k, Eq k) => Int -> [(k, v)] -> Map k v
 fromListWithSize newSize items =
     foldl
@@ -131,17 +146,26 @@ fromListWithSize newSize items =
 fromList :: (MJDHashable k, Eq k) => [(k, v)] -> Map k v
 fromList ls = fromListWithSize (5 * length ls) ls
 
-getKeys :: Map k v -> [k]
-getKeys = map fst . getItems
+isEmpty :: Map k v -> Bool
+isEmpty m = fullness m == 0
 
 getItems :: Map k v -> [(k, v)]
 getItems (Map{slots = vec}) = [(k, v) | Full (k, v) <- V.toList vec]
+
+getKeys :: Map k v -> [k]
+getKeys = map fst . getItems
+
+getValues :: Map k v -> [v]
+getValues = map snd . getItems
 
 sampleKVPs :: [(String, String)]
 sampleKVPs = [("potato", "blue"), ("apple", "red"), ("banana", "yellow"), ("kiwi", "brown"), ("blackberry", "black"), ("octopus", "purple")]
 
 sample :: Map String String
 sample = fromListWithSize 8 sampleKVPs
+
+member :: (MJDHashable k, Eq k) => k -> Map k v -> Bool
+member k m = isJust $ get k m
 
 lift :: (Vector (Slot k v) -> Vector (Slot k v)) -> (Map k v -> Map k v)
 lift f m@Map{slots} = m{slots = f slots}
@@ -154,3 +178,10 @@ lift f m@Map{slots} = m{slots = f slots}
 -- element is just skipped silently
 display :: Map k v -> [(Int, k, v)]
 display m = [(i, k, v) | (i, Full (k, v)) <- (V.toList . V.indexed . slots) m]
+
+instance (Eq k, Eq v) => Eq (Map k v) where
+    Map{slots = []} == Map{slots = []} = True
+    Map{slots = []} == Map _ = False
+    Map _ == Map{slots = []} = False
+    m1@(Map{slots = ((k, v) : _)}) == m2 =
+        get k m2 == Just v && delete k m1 == delete k m2
