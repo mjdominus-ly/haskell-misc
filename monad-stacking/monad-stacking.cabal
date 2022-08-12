@@ -1,0 +1,66 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 08e8e132b5219d0d53a172e3c511f9dc8c0ecb616d1a5bbfe8bd9bfcfe862450
+
+name:           monad-stacking
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/mjdominus/monad-stacking#readme>
+homepage:       https://github.com/mjdominus/monad-stacking#readme
+bug-reports:    https://github.com/mjdominus/monad-stacking/issues
+author:         Mark Dominus
+maintainer:     mjd@pobox.com
+copyright:      2022 Mark Dominus
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/mjdominus/monad-stacking
+
+library
+  exposed-modules:
+      Lib
+      MJDState
+  other-modules:
+      Paths_monad_stacking
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , mtl
+  default-language: Haskell2010
+
+executable monad-stacking-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_monad_stacking
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , monad-stacking
+    , mtl
+  default-language: Haskell2010
+
+test-suite monad-stacking-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_monad_stacking
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , monad-stacking
+    , mtl
+  default-language: Haskell2010
