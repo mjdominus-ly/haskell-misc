@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 08e8e132b5219d0d53a172e3c511f9dc8c0ecb616d1a5bbfe8bd9bfcfe862450
+-- hash: aedb5b9da161ca852c1c14b9841a0357687c26e1b6606d377c01789b92cdf0f2
 
 name:           monad-stacking
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       Lib
       MJDState
+      Runnable
   other-modules:
       Paths_monad_stacking
   hs-source-dirs:
@@ -60,7 +61,11 @@ test-suite monad-stacking-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , base >=4.7 && <5
     , monad-stacking
     , mtl
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
   default-language: Haskell2010

@@ -36,4 +36,4 @@ c = do
 --  put $ z + z
 
 main :: IO ()
-main = print $ run c 77
+main = print $ run b 77

@@ -1,0 +1,63 @@
+module Hacking where
+
+import Control.Monad.Identity
+import MJDState
+import Test.QuickCheck hiding (sample)
+import Test.Tasty
+import Test.Tasty.HUnit
+
+main :: IO ()
+main = defaultMain $ testGroup "main" [pureIdLaw]
+
+triv = testCase "2+2=4?" $ do
+    2 + 2 @?= 4
+
+z = testCase "property" $
+    quickCheck $ \(n, m) ->
+        n * n + m * m == (n + m) * (n + m :: Integer)
+
+pureIdLaw =
+    testCase "pure id" $
+        quickCheck $ \v -> (pure id <*> v) == v
+
+-- laws
+--  1. pure id <*> v  =  v
+--  2. pure f <*> pure x = pure (f x)
+--  3. u <*> pure y = pure ($ y) <*> u
+--  4. u <*> (v <*> w) = pure (.) <*> u <*> v <*> w
+
+{- propLaw3 :: () -> Bool
+propLaw3 () =
+    lhs == rhs
+  where
+    lhs :: StateT Integer Identity Integer
+    rhs :: StateT Integer Identity Integer
+    lhs = f <*> pure i
+    rhs = pure ($ i) <*> f -}
+
+adHocLaw = testCase "law3" $ quickCheck propLaw3
+
+{- functorLaws = testGroup "functor laws" [fmapIdLaw, fmapCompLaw] -}
+
+fmapIdLaw =
+    testCase "fmap id" $
+        let prop :: (Integer, StateT Integer Identity Integer) -> Bool
+            prop (init, sm@(StateT z)) =
+                run (fmap id sm) init == run (id sm) init
+         in quickCheck prop
+
+fmapCompLaw =
+    testCase "fmap id" $
+        let prop :: (Fun Integer Integer, Fun Integer Integer, [Integer]) -> Bool
+            prop (Fn f, Fn g, x) = fmap (f . g) x == ((fmap f) . (fmap g)) x
+            prop2 :: (Fun Integer Integer, [Integer]) -> Bool
+            prop2 (Fn f, x) = fmap (f . g) x == ((fmap f) . (fmap g)) x
+              where
+                g = (+ 1)
+            prop3 :: (Fun Integer Integer, [Integer]) -> Bool
+            prop3 (Fn g, x) = fmap (f . g) x == ((fmap f) . (fmap g)) x
+              where
+                f = (* 3)
+         in do
+                -- quickCheck prop
+                quickCheck prop2
