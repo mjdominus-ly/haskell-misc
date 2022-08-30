@@ -16,6 +16,7 @@ import Test.Tasty.QuickCheck hiding (sample)
 main :: IO ()
 main = defaultMain $ testGroup "main" [identityLaw, homomorphismLaw, interchangeLaw, compositionLaw]
 
+-- StateT (s -> m (s, a))
 -- StateT (Integer -> Identity (Integer, a)
 newtype Concrete a = Conc (Fun Integer (Identity (Integer, a)))
     deriving (Show, Arbitrary)
@@ -24,6 +25,15 @@ up :: Concrete a -> StateT Integer Identity a
 up (Conc f_) = StateT (applyFun f_)
 runC :: Concrete a -> Integer -> Identity (Integer, a)
 runC = run . up
+
+-- StateT s m = StateT (s -> m (s, a))
+-- StateT (s -> (StateT String Identity a)
+newtype Concrete2 a = Conc2 (Fun String (Concrete a))
+    deriving (Show, Arbitrary)
+
+-- up2 :: Concrete2 a -> StateT String (StateT Integer Identity) a
+
+-- up2 (Conc2 f_) = _ (up . (applyFun f_))
 
 --  1. pure id <*> v  =  v
 identityLaw =
@@ -50,7 +60,7 @@ homomorphismLaw =
 
 --  3. u <*> pure y = pure ($ y) <*> u
 interchangeLaw =
-    testProperty "xch law" prop
+    testProperty "exch law" prop
   where
     prop :: Concrete (Fun Integer Integer) -> Integer -> Integer -> Property
     prop u' y i = counterexample msg $ run lhs i == run rhs i

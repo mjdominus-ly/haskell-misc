@@ -4,6 +4,7 @@
 module MJDState where
 
 import Control.Applicative
+import Control.Monad.IO.Class
 import Control.Monad.Identity
 import System.IO.Unsafe
 
@@ -64,6 +65,13 @@ instance Monad m => Monad (StateT s m) where
         (s', a) <- za s
         run (f a) s'
 
+instance MonadIO m => MonadIO (StateT s m) where
+  -- liftIO :: IO a -> StateT s m a
+  liftIO ioa = StateT $ \s ->
+    do
+      a <- liftIO ioa
+      return (s, a)
+
 tr :: String -> a -> a
 tr s v = (unsafePerformIO (print s) `seq` v)
 
@@ -75,6 +83,11 @@ put s = StateT $ \s' -> tr ("put: " ++ show s ++ " (was " ++ show s' ++ ")") (re
 
 init :: Monad m => s -> StateT s m ()
 init s = StateT $ \_ -> return (s, ())
+
+update :: (Show s, Monad m) => (s -> s) -> StateT s m ()
+update f = do
+  s <- get
+  put $ f s
 
 (===) :: (Eq (m (s, a)), Num s) => StateT s m a -> StateT s m a -> Bool
 s1 === s2 =
