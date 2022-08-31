@@ -63,6 +63,9 @@ instance LogWriterClass IO where
 instance Monad m => LogWriterClass (WriterT [String] m) where
     log s = tell [s]
 
+instance Monad m => LogWriterClass (WriterT String m) where
+    log s = tell (s ++ "\n")
+
 get :: (Show s, LogWriterClass m) => StateT s m s
 get =
     StateT
@@ -82,7 +85,7 @@ put s' =
 run :: StateT s m a -> s -> m (s, a)
 run (StateT z) s = z s
 
-test :: StateT Integer (WriterT [String] Identity) ()
+test :: StateT Integer (WriterT String Identity) ()
 test = do
     a <- get
     put $ 2 * a
