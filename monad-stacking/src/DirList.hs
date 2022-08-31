@@ -11,8 +11,18 @@ data FIS = FIS {todo :: [FilePath], result :: [FileInfo]} deriving (Show)
 inDir d fp = d ++ "/" ++ fp
 qualify d = map (inDir d)
 
-getTodo :: StateT FIS m [FilePath]
+getTodo :: Monad m => StateT FIS m [FilePath]
 getTodo = fmap todo get
+
+trimTodo :: Monad m => StateT FIS m ()
+trimTodo = do
+    FIS (f : fs) res <- get
+    put $ FIS fs res
+
+tellResult :: Monad m => FileInfo -> StateT FIS m ()
+tellResult r = do
+    FIS todo result <- get
+    put $ FIS todo (r : result)
 
 ifEmpty :: Monad m => m [x] -> m a -> m a -> m a
 ifEmpty mls mt me = do
@@ -29,15 +39,18 @@ step' = do
         ( do
             f : fs <- getTodo
             exists <- liftIO $ doesFileExist f
-            res <-
-                if exists
-                    then do
-                        info <- liftIO $ fileInfo f
-                        pure (info : result)
-                    else pure result
-            put $ FIS{todo = fs, result = res}
+            if exists
+                then (liftIO $ fileInfo f) >>= tellResult
+                else return ()
+            trimTodo
             step'
         )
+
+main5 dir = do
+    files <- listDirectory dir
+    let paths = qualify dir files
+    (final_state, _) <- run step' (initState paths)
+    return final_state
 
 step :: StateT FIS IO ()
 step = do

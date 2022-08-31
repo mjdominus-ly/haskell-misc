@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 99bc6a4b9f1f6e21546bdd250647e1e3ec7f5e817eefc109d7f8be208fbdc807
+-- hash: 768faff595a495aebb4af6e5d8a0607ccb753094b4f4b50287cfa8d3759f2403
 
 name:           monad-stacking
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       DirList
       Lib
+      LoggingStateT
       MJDState
       Runnable
   other-modules:
@@ -39,6 +40,7 @@ library
       base >=4.7 && <5
     , directory
     , mtl
+    , transformers
   default-language: Haskell2010
 
 executable monad-stacking-exe
@@ -53,6 +55,7 @@ executable monad-stacking-exe
     , directory
     , monad-stacking
     , mtl
+    , transformers
   default-language: Haskell2010
 
 test-suite monad-stacking-test
@@ -72,4 +75,5 @@ test-suite monad-stacking-test
     , tasty
     , tasty-hunit
     , tasty-quickcheck
+    , transformers
   default-language: Haskell2010
