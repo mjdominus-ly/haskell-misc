@@ -12,4 +12,6 @@ main :: IO ()
 main = do
     g <- initStdGen
     res <- evalRandT game g
-    putStrLn $ "Result: " ++ show res
+    putStrLn $ case res of
+        IWin -> "I win!"
+        YouWin -> "You win."
