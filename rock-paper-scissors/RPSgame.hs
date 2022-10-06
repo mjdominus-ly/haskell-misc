@@ -3,6 +3,7 @@ module RPSgame (
     makeComputerPlayer,
     makeGame,
     nameOf,
+    Player,
 ) where
 
 import Control.Monad.IO.Class
