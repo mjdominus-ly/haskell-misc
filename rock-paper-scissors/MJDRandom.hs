@@ -1,4 +1,4 @@
-module MJDRandom where
+module MJDRandom (evalRandT, RandT, getUniform) where
 
 import Control.Monad.IO.Class
 import Control.Monad.Trans.State

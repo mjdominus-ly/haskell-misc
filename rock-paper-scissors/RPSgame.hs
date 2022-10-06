@@ -1,4 +1,9 @@
-module RPSgame where
+module RPSgame (
+    makeHumanPlayer,
+    makeComputerPlayer,
+    makeGame,
+    nameOf,
+) where
 
 import Control.Monad.IO.Class
 import Data.List
@@ -7,18 +12,22 @@ import RPS
 import System.IO
 import System.Random
 
-data GameResult = IWin | YouWin | Tie
-    deriving (Eq, Show, Enum)
+data Player = Player (Player -> RandT StdGen IO RPS) String
+makeHumanPlayer :: String -> Player
+makeHumanPlayer = Player promptMove
 
-myMove :: RandT StdGen IO RPS
-myMove = do
+makeComputerPlayer :: Int -> Player
+makeComputerPlayer n = Player randomMove $ "COMPUTER-" ++ show n
+
+randomMove :: Player -> RandT StdGen IO RPS
+randomMove p = do
     m <- getUniform
-    liftIO $ putStrLn $ "I intend to throw: " ++ show m
+    liftIO $ putStrLn $ nameOf p ++ " intends to throw: " ++ show m
     return m
 
-yourMove :: IO RPS
-yourMove = do
-    putStr "Your move? "
+promptMove :: MonadIO m => Player -> m RPS
+promptMove p = liftIO $ do
+    putStr $ "Your move, " ++ nameOf p ++ "? "
     hFlush stdout
     fromString <$> getLine
 
@@ -33,17 +42,25 @@ reportRound m y = do
     sortP :: Ord a => a -> a -> (a, a)
     sortP a b = if a > b then (a, b) else (b, a)
 
-game :: RandT StdGen IO GameResult
-game = do
-    m <- myMove
-    roundResult <- liftIO $ do
-        y <- yourMove
-        putStrLn $ "I threw: " ++ show m
-        putStrLn $ reportRound m y
-        return $ case compare m y of
-            GT -> IWin
-            LT -> YouWin
-            EQ -> Tie
-    case roundResult of
-        Tie -> (liftIO $ putStrLn "Another round!") >> game
-        x -> return x
+nameOf :: Player -> String
+nameOf (Player _ n) = n
+
+moveGen :: Player -> RandT StdGen IO RPS
+moveGen p@(Player m _) = m p
+
+-- returns the winner
+makeGame :: Player -> Player -> RandT StdGen IO Player
+makeGame p1 p2 = game
+  where
+    game = do
+        a <- moveGen p1
+        b <- moveGen p2
+
+        liftIO $ do
+            putStrLn $ nameOf p1 ++ " threw: " ++ show a
+            putStrLn $ nameOf p2 ++ " threw: " ++ show b
+            putStrLn $ reportRound a b
+        case compare a b of
+            GT -> return p1
+            LT -> return p2
+            EQ -> (liftIO $ putStrLn "Another round!") >> game
