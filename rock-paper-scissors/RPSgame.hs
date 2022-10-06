@@ -10,6 +10,7 @@ import Control.Monad.IO.Class
 import Data.List
 import MJDRandom
 import RPS
+import System.Environment
 import System.IO
 import System.Random
 
@@ -23,7 +24,12 @@ makeComputerPlayer n = Player randomMove $ "COMPUTER-" ++ show n
 randomMove :: Player -> RandT StdGen IO RPS
 randomMove p = do
     m <- getUniform
-    liftIO $ putStrLn $ nameOf p ++ " intends to throw: " ++ show m
+    cheat <- liftIO $ lookupEnv "RPSCHEAT"
+    case cheat of
+        Just x
+            | x /= "" && x /= "0" ->
+                liftIO $ putStrLn $ nameOf p ++ " intends to throw: " ++ show m
+        _ -> return ()
     return m
 
 promptMove :: MonadIO m => Player -> m RPS
