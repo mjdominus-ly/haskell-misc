@@ -30,7 +30,12 @@ promptMove :: MonadIO m => Player -> m RPS
 promptMove p = liftIO $ do
     putStr $ "Your move, " ++ nameOf p ++ "? "
     hFlush stdout
-    fromString <$> getLine
+    play <- fromString <$> getLine
+    case play of
+        Just rps -> return rps
+        Nothing -> do
+            putStrLn $ "Can't understand that, enter 'r', 'p', or 's'"
+            promptMove p
 
 reportRound :: RPS -> RPS -> String
 reportRound m y = do

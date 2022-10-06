@@ -17,12 +17,12 @@ instance Ord RPS where
     compare Scissors Rock = LT
     compare a b = compare (fromEnum a) (fromEnum b)
 
-fromString :: String -> RPS
+fromString :: String -> Maybe RPS
 fromString s = case map toLower s of
-    'p' : _ -> Paper
-    'r' : _ -> Rock
-    's' : _ -> Scissors
-    _ -> error "what"
+    'p' : _ -> return Paper
+    'r' : _ -> return Rock
+    's' : _ -> return Scissors
+    _ -> Nothing
 
 winVerb Rock = "smashes"
 winVerb Paper = "wraps"
