@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 768faff595a495aebb4af6e5d8a0607ccb753094b4f4b50287cfa8d3759f2403
+-- hash: e1085ad5ccc5b754b6c3282d2f0170ed42b35ab757b369bfdb9e33e9c7dbf0df
 
 name:           monad-stacking
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       DirList
       Lib
       LoggingStateT
+      LoggingStateT2
       MJDState
       Runnable
   other-modules:

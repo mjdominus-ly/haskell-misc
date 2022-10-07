@@ -19,7 +19,9 @@ makeHumanPlayer :: String -> Player
 makeHumanPlayer = Player promptMove
 
 makeComputerPlayer :: Int -> Player
-makeComputerPlayer n = Player randomMove $ "COMPUTER-" ++ show n
+makeComputerPlayer n = Player randomMove name
+  where
+    name = "COMPUTER-X0" ++ show n
 
 randomMove :: Player -> RandT StdGen IO RPS
 randomMove p = do
@@ -48,25 +50,22 @@ reportRound m y = do
     if m == y
         then "It's a tie."
         else
-            let (w, l) = sortP m y
+            let [w, l] = sort [m, y]
              in show w ++ " " ++ winVerb w ++ " " ++ show l
-  where
-    sortP :: Ord a => a -> a -> (a, a)
-    sortP a b = if a > b then (a, b) else (b, a)
 
 nameOf :: Player -> String
 nameOf (Player _ n) = n
 
-moveGen :: Player -> RandT StdGen IO RPS
-moveGen p@(Player m _) = m p
+genMove :: Player -> RandT StdGen IO RPS
+genMove p@(Player m _) = m p
 
 -- returns the winner
 makeGame :: Player -> Player -> RandT StdGen IO Player
 makeGame p1 p2 = game
   where
     game = do
-        a <- moveGen p1
-        b <- moveGen p2
+        a <- genMove p1
+        b <- genMove p2
 
         liftIO $ do
             putStrLn $ nameOf p1 ++ " threw: " ++ show a
