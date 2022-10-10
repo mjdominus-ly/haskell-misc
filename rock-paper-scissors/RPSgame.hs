@@ -14,7 +14,7 @@ import System.Environment
 import System.IO
 import System.Random
 
-data Player = Player (Player -> RandT StdGen IO RPS) String
+data Player = Player (Player -> RandT IO RPS) String
 makeHumanPlayer :: String -> Player
 makeHumanPlayer = Player promptMove
 
@@ -23,7 +23,7 @@ makeComputerPlayer n = Player randomMove name
   where
     name = "COMPUTER-X0" ++ show n
 
-randomMove :: Player -> RandT StdGen IO RPS
+randomMove :: Player -> RandT IO RPS
 randomMove p = do
     m <- getUniform
     cheat <- liftIO $ lookupEnv "RPSCHEAT"
@@ -56,11 +56,11 @@ reportRound m y = do
 nameOf :: Player -> String
 nameOf (Player _ n) = n
 
-genMove :: Player -> RandT StdGen IO RPS
+genMove :: Player -> RandT IO RPS
 genMove p@(Player m _) = m p
 
 -- returns the winner
-makeGame :: Player -> Player -> RandT StdGen IO Player
+makeGame :: Player -> Player -> RandT IO Player
 makeGame p1 p2 = game
   where
     game = do
