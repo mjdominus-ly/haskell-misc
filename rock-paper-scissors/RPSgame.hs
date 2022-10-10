@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module RPSgame (
     makeHumanPlayer,
     makeComputerPlayer,
@@ -14,7 +16,7 @@ import System.Environment
 import System.IO
 import System.Random
 
-data Player = Player (Player -> RandT IO RPS) String
+data Player = Player (forall m. MonadIO m => Player -> RandT m RPS) String
 makeHumanPlayer :: String -> Player
 makeHumanPlayer = Player promptMove
 
@@ -23,7 +25,7 @@ makeComputerPlayer n = Player randomMove name
   where
     name = "COMPUTER-X0" ++ show n
 
-randomMove :: Player -> RandT IO RPS
+randomMove :: MonadIO m => Player -> RandT m RPS
 randomMove p = do
     m <- getUniform
     cheat <- liftIO $ lookupEnv "RPSCHEAT"
