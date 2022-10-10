@@ -50,7 +50,7 @@ reportRound m y = do
     if m == y
         then "It's a tie."
         else
-            let [w, l] = sort [m, y]
+            let [l, w] = sort [m, y]
              in show w ++ " " ++ winVerb w ++ " " ++ show l
 
 nameOf :: Player -> String
