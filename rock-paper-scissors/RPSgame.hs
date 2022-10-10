@@ -49,14 +49,13 @@ promptMove p = liftIO $ do
 
 reportRound :: RPS -> RPS -> String
 reportRound m y = do
-    if m == y
-        then "It's a tie."
-        else
-            let (l, w) = case compareRPS m y of
-                    LT -> (m, y)
-                    GT -> (y, m)
-                    EQ -> error "Can't happen"
-             in show w ++ " " ++ winVerb w ++ " " ++ show l
+    case compareRPS m y of
+        GT -> report m y
+        LT -> report y m
+        EQ -> "It's a tie."
+  where
+    -- "Scissors cuts paper"
+    report w l = intercalate " " [show w, winVerb w, show l]
 
 nameOf :: Player -> String
 nameOf (Player _ n) = n
