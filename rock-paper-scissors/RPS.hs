@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module RPS (fromString, winVerb, RPS) where
+module RPS (fromString, winVerb, compareRPS, RPS) where
 
 import Data.Char
 import Data.Int
@@ -12,10 +12,10 @@ import System.Random
 data RPS = Rock | Paper | Scissors
     deriving (Eq, Show, Enum, Generic, Uniform, Read)
 
-instance Ord RPS where
-    compare Rock Scissors = GT
-    compare Scissors Rock = LT
-    compare a b = compare (fromEnum a) (fromEnum b)
+compareRPS :: RPS -> RPS -> Ordering
+compareRPS Rock Scissors = GT
+compareRPS Scissors Rock = LT
+compareRPS a b = compare (fromEnum a) (fromEnum b)
 
 fromString :: String -> Maybe RPS
 fromString s = case map toLower s of

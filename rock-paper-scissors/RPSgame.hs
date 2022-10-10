@@ -52,7 +52,10 @@ reportRound m y = do
     if m == y
         then "It's a tie."
         else
-            let [l, w] = sort [m, y]
+            let (l, w) = case compareRPS m y of
+                    LT -> (m, y)
+                    GT -> (y, m)
+                    EQ -> error "Can't happen"
              in show w ++ " " ++ winVerb w ++ " " ++ show l
 
 nameOf :: Player -> String
@@ -66,14 +69,14 @@ makeGame :: Player -> Player -> RandT IO Player
 makeGame p1 p2 = game
   where
     game = do
-        a <- genMove p1
-        b <- genMove p2
+        t1 <- genMove p1
+        t2 <- genMove p2
 
         liftIO $ do
-            putStrLn $ nameOf p1 ++ " threw: " ++ show a
-            putStrLn $ nameOf p2 ++ " threw: " ++ show b
-            putStrLn $ reportRound a b
-        case compare a b of
+            putStrLn $ nameOf p1 ++ " threw: " ++ show t1
+            putStrLn $ nameOf p2 ++ " threw: " ++ show t2
+            putStrLn $ reportRound t1 t2
+        case compareRPS t1 t2 of
             GT -> return p1
             LT -> return p2
             EQ -> (liftIO $ putStrLn "Another round!") >> game
